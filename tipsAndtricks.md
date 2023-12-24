@@ -4,13 +4,25 @@
 
 No need to type **kubectl** every single time.
 
-    alias kk=kubectl
+    alias k=kubectl
 
     export out="--dry-run=client -o yaml"
+    
+    export n="-n my-namespace"
 
-    export do="run busybox --image=busybox --restart=Never --rm -it --command --"
+    alias runbox="kubectl run busybox --image=busybox --restart=Never --rm -it --command --"
 
+    alias runnginx="kubectl run nginx --image=nginx:alpine --restart=Never --rm -it --command --"
 
+Ex:
+    
+    k get po $n
+
+    k get po my-pod $n $out > my-pod.yaml
+
+    runnginx curl -L my-service:8080
+
+    runbox nc -z -v -w 3 my-service 8080
 
 ## Kubectl run/create is your friend
 
@@ -18,41 +30,41 @@ There's no way you'll have time to type all of these up in the exam, so use a ba
 
 **Pod yaml**
 
-    kk run p1 --image=nginx --dry-run=client -o yaml > p1.yaml
+    k run p1 --image=nginx --dry-run=client -o yaml > p1.yaml
 
-    kk run p1 --iamge=nginx $out > p1.yaml
+    k run p1 --iamge=nginx $out > p1.yaml
 
-    kk $do echo "Hello World"
+    k $do echo "Hello World"
 
 **Deploy yaml**
 
-    kk create deployment d1 --image=nginx --replicas=3 --dry-run=client -o yaml > d1.yaml
+    k create deployment d1 --image=nginx --replicas=3 --dry-run=client -o yaml > d1.yaml
 
 **Job yaml**
 
-    kk create job my-job --image=nginx --dry-run=client -o yaml > j1.yaml
+    k create job my-job --image=nginx --dry-run=client -o yaml > j1.yaml
 
 **CronJob yaml**
 
-    kk create cj my-cj --image=nginx --schedule="*/1 * * * *" --dry-run=client -o yaml > cj1.yaml
+    k create cj my-cj --image=nginx --schedule="*/1 * * * *" --dry-run=client -o yaml > cj1.yaml
 
 ## Kubectl get
 **Get deployments, replicasets, pods all-in-one command**
 
-    kk get deploy,rs,po
-    kk get po --show-labels
+    k get deploy,rs,po
+    k get po --show-labels
 
 
 
 ## Grep for events to describe pod details
 
-    kk describe pod <pod-name> | grep -i events -A 10
+    k describe pod <pod-name> | grep -i events -A 10
 
 The -A option essentially means 'after,' so you're saying give me the search results that start with 'events' and then the next 10 lines too. Piping through with **tail** works fine as well, but this option is a bit more precise
 
 ## Find all the kubectl shortcuts
 
-    kk api-resources | grep -i persistentvolumeclaim
+    k api-resources | grep -i persistentvolumeclaim
 
 This gets you the following response
 
@@ -62,17 +74,17 @@ Api-resources gives you the supported api resources (duh), but it also gives you
 
     kubectl get persistentvolumeclaim
 
-    kk get pvc
+    k get pvc
 
 ## Find the fields for supported resources
 
 Need to know about the NodeSelector field in a pod? Check the specs with **explain**. 
 
-    kk explain pod.spec.nodeSelector
+    k explain pod.spec.nodeSelector
 
 Note that it is cap sensitive, so your best bet is to first pipe it through to a case insensitive grep and see if you're in the right spot
 
-    kk explain pod.spec | grep -i nodeselector
+    k explain pod.spec | grep -i nodeselector
 
 Inside these explanations, there's generally a link to the documentation that is necessary for greater understanding.
 
@@ -82,7 +94,7 @@ Strictly speaking, it may be faster to just use the k8s docs over this method if
 
 When typing in -h or —help, you get A LOT of options info populated, where generally you may just want to see some examples of the object being used. To mitigate this, use **head** to only see the examples. Generally, the first 25-30 lines are strictly example based.
 
-    kk annotate --help | head -30
+    k annotate --help | head -30
 
 ## Specificity matters
 
@@ -90,16 +102,16 @@ It's possible to declare details at both the pod level and then the container le
 
 Here is an example with securityContext:
 
-    kk explain pod.spec.securityContext
+    k explain pod.spec.securityContext
 
-    kk explain pod.spec.containers.securityContext
+    k explain pod.spec.containers.securityContext
 
 In this example, if I set runAsUser in both the Pod specs and container specs, the container classification would override the pod specs. 
 
 
 ## Check if a service is reachable from within a pod by nc command
-    kk run busybox --image=busybox --restart=Never --rm -it --command -- wget -O- <service-name>:<service-port>
-    kk run bysybox --image=busybox --restart=Never --rm -it --command -- nc -zv <service-name> <service-port>
+    k run busybox --image=busybox --restart=Never --rm -it --command -- wget -O- <service-name>:<service-port>
+    k run bysybox --image=busybox --restart=Never --rm -it --command -- nc -zv <service-name> <service-port>
 
 ## Search keywords
     pv, pvc
