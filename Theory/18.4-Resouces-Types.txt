@@ -1,0 +1,37 @@
+Resources are categorized into:
+- Namespace:
+	- pods
+	- jobs/cronjob
+	- replicasets
+	- deployment
+	- services
+	- secrets
+	- configmaps
+	- roles
+	- rolebindings
+	- PVC
+	
+	=> to get full list of namespace resource 
+	kubectl api-resources --namespaced=true
+
+- Cluster Scope:
+	- nodes
+	- PV
+	- clusterroles
+	- clusterrolebindings
+	- certificatesigningrequests
+	- namespaces
+
+	=> to get full list of Cluster Scope resource 
+	kubectl api-resources --namespaced=false
+
+
+=> to get full list resources, fullname, shortname...:
+	kubectl api-resources
+
+
+
+
+
+
+	

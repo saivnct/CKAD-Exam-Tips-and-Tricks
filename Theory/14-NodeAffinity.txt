@@ -1,0 +1,50 @@
+Node Affinity: allow us to limit pod placement on specific nodes with advanced options than NodeSelector
+
+
+1. labels the node
+	kubectl label nodes <node-name> <label-key>=<label-value>
+
+	ex:
+		kubectl label nodes node1 color=Blue
+		kubectl describe node node1
+
+2. Limit the pods only run on particular nodes with Affinity
+	- Affinity Types:
+		- requiredDuringSchedulingIgnoredDuringExecution
+			- When creating pod: if scheduler cannot find node with matching rule defined in pod's affinity => the pod will not be scheduled
+
+		- preferreddDuringSchedulingIgnoredDuringExecution
+			- When creating pod: if scheduler cannot find node with matching rule defined in pod's affinity => the pod will be scheduled on any available nodes
+
+		NOTE: for both types: If the pod is running in matching node. But later, we change the node's labels, affinity rules not matching any more => pod still running on that node
+
+- Template:
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: myapp-pod
+	  labels:
+	    app: myapp
+	    type: mypod-type
+	spec:
+	  containers:
+	  - name: mypod-container
+	    image: xxx
+	  
+	  affinity:
+	    nodeAffinity:
+	      requiredDuringSchedulingIgnoredDuringExecution:
+	        nodeSelectorTerms:
+	        - matchExpressions:
+	          - key: color
+	            operator: In    # In, NotIn, Exists, ...
+	            values:
+	            - Blue
+
+
+
+NOTE: In pratical, we ussualy combie Taint-Toleration with Node Affinity to force pods go to right nodes
+
+
+
+

@@ -1,0 +1,144 @@
+- Pod Lifecycle stages:
+	1. Pending: when the Scheduler tries to figure out were to place the POD. If the scheduler cannot find a node to place the POD, it remains in a Pending state
+
+	2. Container Creating: Once the POD is scheduled, it goes into a ContainerCreating status, where the images required for the application are pulled and the container starts.
+
+	3. Running:  Once all the containers in a POD starts, it goes into a running state, where it continues to be until the program completes successfully or is terminated.
+
+
+- Conditions compliment POD status: It is an array of true or false values that tell us the state of a POD.	
+
+				kubectl describe pod myapp-pod    
+				
+	Conditions:
+	- PodScheduled: When a POD is scheduled on a Node, the PodScheduled condition is set to True
+	- Initialized: When the POD is initialized, it’s value is set to True
+	- ContainersReady: When all the containers in the POD are ready, the Containers Ready condition is set to True
+	- Ready: he POD itself is considered to be Ready
+
+
+
+Pod:
+	- template:
+		
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: myapp-pod
+		  labels:
+		    app: myapp
+		    type: mypod-type
+		  annotations:              #optional
+		    buildversion: v1
+		spec:
+		  containers:
+		  - name: mypod-container
+		    image: xxx
+		    env:
+		      - name: MY_SECRET
+		        value: mysecretpassword
+		    command: ["command", "arg1", ...]
+		    args: ["arg1","arg2",....]
+		    ports:
+		      - containerPort: 8080
+		  restartPolicy: Always           # default is Always => auto restart when containers dead
+
+
+- labels & selectors used to group and select k8s object
+	ex: 
+		kubectl get pods --selector type=mypod-type
+		=> Get pods with label "type:mypod-type"
+
+
+- annotations are used to record other details for information purpose
+	ex: tool's detail: name, version, build info, contact detail, phone number, email ... that maybe used for some kind of integration purpose
+
+
+- volume mount to an empty dir:
+
+		spec:
+		  containers:
+		  - name: mypod-container
+		    image: xxx
+		    volumeMounts:
+		      - name: data
+		        mountPath: /path/to/mountpoint
+
+		  #Inject all keys-values from configmap file
+		  volumes:
+		    - name: data
+		      emptyDir: {}
+
+
+
+- logs:
+	kubectl logs -f my-pod-name
+		=> view log stream from the pod
+
+	kubectl logs -f my-pod-name my-container-name
+		=> view log stream of my-container-name from the pod (in case pod has multi-containers inside)
+
+- exec:
+	kubectl exec my-pod-name -- <command>
+	ex:
+		kubectl exec my-pod-name -- cat docs.txt
+
+
+basic commands:
+	kubectl run nginx --image=nginx --labels="tier=web"
+	kubectl run nginx --image=nginx --labels="tier=web" --port=8080
+		=> Create a new pod with name, image, labels and expose it on container port 8080.
+	kubectl create -f my-pod.yml
+
+
+	kubectl get all
+	kubectl get pods
+	kubectl get pods -o wide
+		=> Output with wide (additional details)
+	kubectl get pods --selector type=mypod-type
+		=> Get pods with label "type:mypod-type"
+
+
+
+
+	kubectl delete pod myapp-pod
+	kubectl describe pod myapp-pod         
+
+	
+	kubectl get pod <pod-name> -o yaml > pod-definition.yaml
+		=> extract pod to file
+
+	kubectl run nginx --image=nginx --dry-run=client -o yaml
+		=> create yml file but dont create/run pod (--dry-run=client)
+
+	kubectl run nginx --image=nginx --dry-run=client -o yaml > nginx-pod.yaml
+		=> create yml file but dont create/run pod (--dry-run=client) and export to a file
+
+	
+	kubectl edit pod <pod-name>
+		=> modify the properties of the pod
+		NOTE: only the properties listed below are editable
+			- spec.containers[*].image
+			- spec.initContainers[*].image
+			- spec.activeDeadlineSeconds
+			- spec.tolerations
+			- spec.terminationGracePeriodSeconds
+
+	
+	kubectl replace --force -f my-pod.yml
+		=> delete old pod, replace with the new one
+
+
+	kubectl exec <pod-name> -- <command>
+	=> exec a command on container inside pod
+		kubectl exec ubuntu-pod -- whoami
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,162 @@
+NOTE: Persistent Volumes and Persistent Volume Claims are two separate objects in the Kubernetes namespace: 
+	- An Administrator creates a set of Persistent Volumes to create storages
+	- A user creates Persistent Volume Claims to use the storages
+	-  Once the Persistent Volume Claims are created, Kubernetes binds the Persistent Volumes to Claims based on the request and properties set on the volume.
+
+
+
+1. Persistent Volume:
+
+	- A Persistent Volume (PV) is a Cluster wide pool of storage volumes configured by an Administrator, to be used by users deploying applications on the cluster => The users then select storage from this pool using Persistent Volume Claims (PVC) and apply to pods
+
+
+	- components:
+		- Access Mode: defines how the Volume should be mounted on the hosts
+			- ReadWriteOnce (RWO): the volume can be mounted as read-write by a single node. ReadWriteOnce access mode still can allow multiple pods to access the volume when the pods are running on the same node. 
+			
+			- ReadOnlyMany (ROX): the volume can be mounted as read-only by many nodes.
+			
+			- ReadWriteMany (RWX): the volume can be mounted as read-write by many nodes.
+			
+			- ReadWriteOncePod (RWOP): the volume can be mounted as read-write by a single Pod. Use ReadWriteOncePod access mode if you want to ensure that only one pod across the whole cluster can read that PVC or write to it
+
+		- capacity: Specify the amount of storage to be reserved for this Persistent Volume
+
+		- volume type: hostPath, NFS, glusterFS, Flocker, FibreChannel, CephFS, ScaleIO. Public cloud solutions: AWS EBS, Azure Disk or File or Google’s Persistent Disk.
+
+		- persistentVolumeReclaimPolicy:
+			- Retain - manual reclamation. PV will remain until it is manually deleted by admin -> not available for reuse by any PVC
+			- Recycle - basic scrub (rm -rf /thevolume/*). The data in the volume will be scrubbed before making it available to other claims.
+			- Delete (default) - delete the volume.  As soon as the PVC is deleted, the volume will be deleted as well
+			
+			ex: hostPath
+
+				apiVersion: v1
+				kind: PersistentVolume
+				metadata:
+				  name: my-pv
+				  labels:
+				    nameL my-pv
+				spec:
+				  capacity:
+				    storage: 5Gi
+				  accessModes:
+				    - ReadWriteMany
+				  persistentVolumeReclaimPolicy: Retain
+				  hostPath:
+				    path: /var/log
+
+			ex: AWS Elastic Block Store
+				
+				apiVersion: v1
+				kind: PersistentVolume
+				metadata:
+				  name: my-pv
+				  labels:
+				    nameL my-pv
+				spec:
+				  capacity:
+				    storage: 5Gi
+				  accessModes:
+				    - ReadWriteMany
+				  persistentVolumeReclaimPolicy: Retain
+				  awsElasticBlockStore:
+				    volumeID: <volume-id>
+				    fsType: ext4
+
+	- commands:
+		kubectl create -f my-pv.yaml
+		kubectl get pv
+		kubectl describe pv my-pv  
+
+
+
+
+2. Persistent Volume Claim:
+	- Every Persistent Volume Claim is bound to a single Persistent volume. 
+	- Template:
+
+			apiVersion: v1
+			kind: PersistentVolumeClaim
+			metadata:
+			  name: my-pv-claim
+			  namespace: foo
+			spec:
+			  storageClassName: ""
+			  accessModes:
+			    - ReadWriteMany    
+			  resources:
+			    requests:
+			      storage: 50Mi   
+
+
+	- During the binding process, kubernetes tries to find a Persistent Volume that has sufficient Capacity as requested by the Claim, and any other requested properties such as Access Modes, Volume Modes, Storage Class etc..
+		- If there are multiple possible matches for a single claim, and you would like to specifically use a particular Volume, you could still use labels and selectors to bind to the right volumes:
+			
+			apiVersion: v1
+			kind: PersistentVolumeClaim
+			metadata:
+			  name: my-pv-claim
+			spec:
+			  storageClassName: ""
+			  accessModes:
+			    - ReadWriteMany    
+			  resources:
+			    requests:
+			      storage: 50Mi   
+			  selector:
+			    matchLabels:
+			    name: my-pv
+
+	- NOTE:
+		- A smaller Claim may get bound to a larger volume if all the other criteria matches and there are no better options.
+
+		-  If there are no volumes available the Persistent Volume Claim will remain in a PENDING state, until newer volumes are made available to the cluster
+
+		- There is a one-to-one relationship between Claims and Volumes, so no other claim can utilize the remaining capacity in the volume
+
+
+	- commands:	  
+
+		kubectl create -f my-pv-claim.yaml	   
+		kubectl replace --force -f my-pv-claim.yaml	 
+		kubectl get pvc
+		kubectl describe pvc my-pv-claim
+
+		kubectl delete pvc my-pv-claim
+
+
+
+
+3. Using PVCs in Pods
+	- Template:
+		
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: mypod
+		spec:
+		  containers:
+		    - name: myfrontend
+		      image: nginx
+		      volumeMounts:
+		      - mountPath: "/var/www/html"
+		        name: mypvc-def
+		  volumes:
+		    - name: mypvc-def
+		      persistentVolumeClaim:
+		        claimName: my-pv-claim
+
+
+    - NOTE: The same is true for ReplicaSets or Deployments. Add this to the pod template section of a Deployment on ReplicaSet.
+
+
+
+
+
+
+
+
+
+
+

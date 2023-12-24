@@ -1,0 +1,144 @@
+- Pod Lifecycle stages:
+	1. Pending: when the Scheduler tries to figure out were to place the POD. If the scheduler cannot find a node to place the POD, it remains in a Pending state
+
+	2. Container Creating: Once the POD is scheduled, it goes into a ContainerCreating status, where the images required for the application are pulled and the container starts.
+
+	3. Running:  Once all the containers in a POD starts, it goes into a running state, where it continues to be until the program completes successfully or is terminated.
+
+
+- Conditions compliment POD status: It is an array of true or false values that tell us the state of a POD.	
+				kubectl describe pod myapp-pod    
+	Conditions:
+	- PodScheduled: When a POD is scheduled on a Node, the PodScheduled condition is set to True
+	- Initialized: When the POD is initialized, it’s value is set to True
+	- ContainersReady: When all the containers in the POD are ready, the Containers Ready condition is set to True
+	- Ready: he POD itself is considered to be Ready
+
+
+
+
+- Readiness Probes: the ways we tell the pod if an application inside a container is actually ready
+
+	- template:
+
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  labels:
+			    app: myapp
+			    type: mypod-type
+			spec:
+			  containers:
+			  - name: mypod-container
+			    image: xxx
+			    ports:
+			      - containerPort: 8080
+			    readinessProbe:
+			      httpGet:
+			        path: /api/ready 
+			        port: 8080
+
+
+	- Readiness Probes:
+		- HTTP test:
+			
+			readinessProbe:
+			  httpGet:
+			    path: /api/ready 
+			    port: 8080
+			  initialDelaySeconds: 10
+			  periodSeconds: 5
+			  failureThreshold: 8
+
+
+		- TCP test:
+
+			readinessProbe:
+			  tcpSocket:
+			    port: 3306  			
+
+
+		- Execute test command
+
+			readinessProbe:
+			  exec:
+			    command:
+			    - cat
+			    - /app/is_ready
+
+
+	- There are some additional options as well: 
+		- initialDelaySeconds: If you know that your application will always take a minimum of, say, 10 seconds to warm up, you can add an initial delay to the probe. 
+		- periodSeconds: If you’d like to specify how often to probe, you can do that using the periodSeconds option. 
+		- failureThreshold: By default if the application is not ready after 3 attempts, the probe will stop. If you’d like to make more attempts, use the failureThreshold option
+
+
+
+
+- Liveness Probes: the ways we tell the pod if an application inside a container is healthy (if not -> the pod will restart)
+	- A liveness probe can be configured on the container to periodically test whether the application within the container is actually healthy.
+
+	- template:
+
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  labels:
+			    app: myapp
+			    type: mypod-type
+			spec:
+			  containers:
+			  - name: mypod-container
+			    image: xxx
+			    ports:
+			      - containerPort: 8080
+			    livenessProbe:
+			      httpGet:
+			        path: /api/healthy
+			        port: 8080
+						
+
+	- Liveness Probes:
+		- HTTP test:
+			
+			livenessProbe:
+			  httpGet:
+			    path: /api/healthy
+			    port: 8080
+			  initialDelaySeconds: 10
+			  periodSeconds: 5
+			  failureThreshold: 8
+
+		- TCP test:
+
+			livenessProbe:
+			  tcpSocket:
+			    port: 3306    		
+
+
+		- Execute test command
+
+			livenessProbe:
+			  exec:
+			    command:
+			    - cat
+			    - /app/is_ready
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

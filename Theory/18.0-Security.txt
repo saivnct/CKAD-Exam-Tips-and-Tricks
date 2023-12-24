@@ -1,0 +1,97 @@
+
+
+All communication inside the cluster are TLS based: etcd cluster, kube ApiServer, Kube Controller Manager, Kube Scheduler, Kube Proxy, Kubelet...
+
+By default, all pods can access others pods within the cluster => we can restrict this using network policies
+
+
+Cluster Account:
+	- Bots:
+		- Service Accounts
+		=> in k8s, we can create and manage service account using k8s API
+	- User:
+		- Admins
+		- Developers
+
+		=> k8s does not manage user account natively, it relies on an external source like a file with user details, cert, LDAP, ... to manage users => We cannot create users in k8s cluster
+	
+Security Flow:	
+	Kubectl -> Authentication -> Authorization -> Admission Controllers -> (Create pods, deployments, ...)
+
+
+Authentication: Who can access?
+	- Files: Username & Passwords
+	- Files: Username & Tokens
+	- Certificates
+	- External Authentication providers - LDAP
+	- Service Accounts
+
+Authorization: What can they do?
+	- Authorization modes:
+		- RBAC (role based access control) Authorization
+			- we define roles with set of permissions and assign to user/group user
+
+		- ABAC (attribute based access control) Authorization: 
+			- create a policy file with set of policy in JSON format that defined users/group users permissions 
+			- pass policy file to Kube API server
+			- everytime we want to update the rules, we must edit policy file and restart Kube API server => difficult to manage
+
+		- Node Authorization: handle request from kubelet (kubelet is installed on worker node to interact with Kube API)
+
+		- Webhook Mode: authorization using 3rd tools
+
+		- AlwaysAllow (default): allow all rquests without performing any authorization check
+		- AlwaysDeny: deny all rquests
+	
+	- Authorization mode are set using "--authorization-mode=xxx" in Kube API server
+		cat /etc/kubernetes/manifest/kube-apiserver.yaml
+		nano /etc/kubernetes/manifest/kube-apiserver.yaml
+
+
+		ex: 
+				--authorization-mode=RBAC
+			enable multiple modes:
+				--authorization-mode=Node,RBAC,Webhook
+
+				User -> Node -> RBAC -> Webhook
+				
+				=>  when you enable multiple modes, your request is authorized using each one of mode in the order it is specified (if request is denied by 1 mod, request will be forward to next mode)
+
+Admission Controllers: used for validation requests
+	- ex:
+		- only permit images from certain registry
+		- do not permit runsAsUser: root
+		- only permit certain capabilities
+		- restrict Pod must have labels
+		- ...
+
+	- prebuilt features:
+		- AlwaysPullImages
+		- DefaultStorageClass
+		- EventRateLimit
+		- NamespaceLifecycle
+		- ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

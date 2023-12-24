@@ -1,0 +1,95 @@
+Deployment:
+	- deployment create replicaset -> pods
+	- features:
+		- rolling update
+		- rollback
+	- deployment strategy:
+		- Recreate
+		- Rolling update (default)
+	- arch:
+		\\\\\\\\deployment\\\\\\\\\\\\\\\\
+		\\								\\
+		\\	\\\\\\\\replicaset\\\\		\\
+		\\	\\		pods		\\		\\
+		\\	\\\\\\\\\\\\\\\\\\\\\\\\	\\
+		\\								\\
+		\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	- template:
+
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: myapp-deployment
+		  labels:
+		    app: myapp
+		    type: myapp-type
+		spec:
+		  template:
+		    \\\\\\\\\\\\\\\\\\\\
+		    \\POD TEMPLATE HERE\\
+		    \\\\\\\\\\\\\\\\\\\\
+		  replicas: n
+		  selector:
+		    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+		    \\matchLabels - matchExpressions      \\
+		    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+		    matchLabels:
+		      type: mypod-type // -> Match the labels of pod in template
+
+		  strategy:   						# Optional
+		    type: RollingUpdate 	#  RollingUpdate/Recreate
+		    rollingUpdate:
+		      maxSurge: 25%
+		      maxUnavailable: 25%
+
+
+
+basic commands:
+
+	kubectl create -f my-deployment.yml --record
+		=> record option instructs K8s to record the cause of change in deployment's revision
+
+	kubectl create deployment --image=nginx nginx
+
+	kubectl create deployment nginx --image=nginx --replicas=4
+		=> create and run deployment with 4 replicas
+
+	kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+		=> create yml file but dont create/run deployment (--dry-run=client)
+
+	kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > nginx-deployment.yaml
+		=> create yml file but dont create/run deployment (--dry-run=client) and export to a file
+
+
+
+
+	
+	kubectl get deployments
+	kubectl describe deployment myapp-deployment
+	
+	kubectl rollout status deployment/myapp-deployment
+	kubectl rollout history deployment/myapp-deployment
+		=> show revision and history of deployment
+	
+	kubectl aplpy -f xxx.yml
+		=> apply the change to deployment (docker image's version,...)
+	kubectl rollout undo deployment/myapp-deployment
+		=> rollback to previous version 
+
+
+	Scale:
+		kubectl scale --replicas=4 -f xxx.yml
+		kubectl scale deployment myapp-deployment --replicas=4
+
+	Change image:
+		kubectl set image deployment <deployment-name> <container-name>=<new-image>
+
+		ex: 
+		kubectl set image deployment nginx-deploy nginx=nginx:1.17
+
+
+
+
+
+
+

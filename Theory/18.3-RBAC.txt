@@ -1,0 +1,99 @@
+RBAC (role based access control) Authorization: we define roles with set of permissions and assign to user/group user
+
+- Role & Role Binding is define within namespace
+
+
+- Role:
+	- Template:
+
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: Role
+		metadata:
+		  namespace: default
+		  name: developer-role
+		rules:
+		- apiGroups: [""]         # "" indicates the core API group
+		  resources: ["pods"]
+		  verbs: ["list", "create", "get", "watch", "update", "delete"]
+		  resourceNames: ["pod-name-1", "pod-name-2"]    #restrict access to specific pods if needed
+		- apiGroups: [""]         
+		  resources: ["ConfigMap"]
+		  verbs: ["list", "create", "get", "watch", "update", "delete"]
+		- apiGroups: ["apps"]         
+		  resources: ["deployments"]
+		  verbs: ["list", "create", "get", "watch", "update", "delete"]
+
+
+	- commands:
+		kubectl create -f developer-role.yaml
+
+
+		kubectl create role --help
+		kubectl create role <role-name> --verb=list,create,delete --resource=pods
+
+		kubectl edit role <role-name> --namespace=<namespace>
+
+
+		kubectl get roles
+		kubectl get roles --namespace=<namespace-name>
+		kubectl describe role <role-name>
+		kubectl describe role <role-name> --namespace=<namespace-name>
+
+		kubectl get roles -A
+		=> get roles in all namespace
+
+		kubectl get roles -A --no-headers | wc -l
+		=> count roles in all namespace
+
+
+- Role Binding: link role to user
+	- Template:
+
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: RoleBinding
+		metadata:
+		  name: developer-role-binding
+		subjects:
+		- kind: User
+		  name: dev-user
+		  apiGroup: rbac.authorization.k8s.io
+		roleRef:
+		  kind: Role
+		  name: developer-role
+		  apiGroup: rbac.authorization.k8s.io
+
+
+
+	- commands:
+		kubectl create -f developer-role-binding.yaml
+
+		kubectl create rolebinding --help
+		kubectl create rolebinding <role-binding-name> --role=<role-name> --user=user1 --user=user2 --group=group1
+		
+		kubectl get rolebindings
+		kubectl describe rolebinding <role-binding-name>
+
+
+
+
+
+- Check access:
+	- for current context:
+		kubectl auth can-i create pods
+		kubectl auth can-i create deployments
+		kubectl auth can-i delete nodes
+	- for others users:
+		kubectl auth can-i create deployments --as dev-user
+		kubectl auth can-i delete nodes --as dev-user
+		kubectl auth can-i create pods --as dev-user --namespace test
+
+
+
+
+
+
+
+
+
+
+

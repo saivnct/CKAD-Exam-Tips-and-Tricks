@@ -1,0 +1,87 @@
+ConfigMaps:
+	- template:
+
+		apiVersion: v1
+		kind: ConfigMap
+		metadata:
+		  name: myapp-configmap
+		data:
+		  APP_COLOR: blue
+		  APP_MODE: prod
+
+
+
+
+basic commands:
+	kubectl create configmap <config-map-name>	\
+	--from-literal=<key1>=<value1> \
+	--from-literal=<key2>=<value2> 
+
+
+	kubectl create configmap <config-map-name> \
+	--from-file=<path-to-file>
+
+		ex: app_config.properties
+			APP_COLOR: blue
+			APP_MODE: prod
+
+
+	kubectl create -f my-configmap.yaml
+
+	kubectl get configmaps
+	kubectl describe configmap myapp-configmap
+
+
+
+
+
+- Inject into pods:
+
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: myapp-pod
+	  labels:
+	    app: myapp
+	    type: mypod-type
+	spec:
+	  containers:
+	  - name: mypod-container
+	    image: xxx
+	  
+	    #Inject all keys-values from myapp-configmap         
+	    envFrom:
+	      - configMapRef:
+	        name: myapp-configmap
+
+	    #Inject single env from myapp-configmap 
+	    env:  
+	      - name: APP_COLOR
+	        valueFrom:
+	          configMapKeyRef:
+	            name: myapp-configmap 
+	            key: APP_COLOR
+
+	    #Inject all keys-values from configmap file
+	    volumeMounts:
+	      - name: app-config-volume
+	        mountPath: /path/to/mountpoint
+
+
+	  #Inject all keys-values from configmap file
+	  volumes:
+	    - name: app-config-volume
+	      configMap:
+	        name: myapp-configmap 
+
+
+
+
+
+
+
+
+
+
+
+

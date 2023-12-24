@@ -1,0 +1,122 @@
+Docker Notes:
+
+
+1. ENTRYPOIT VS CMD:
+	- CMD:
+		ex:
+			FROM Ubuntu
+			CMD ["sleep","5"]
+
+		docker build -t ubuntu-sleeper .
+		
+		run with built-in CMD:
+			docker run ubuntu-sleeper
+				=> container run with built-in CMD "sleep 5" 
+				=> run for 5s and stop
+		overide built-in CMD:
+			docker run ubuntu-sleeper sleep 10
+				=> container run with overide CMD "sleep 10" 
+				=> run for 10s and stop
+
+	- ENTRYPOINT: use with args
+		ex:
+			FROM Ubuntu
+			ENTRYPOINT ["sleep"]
+
+		run with arg passed to ENTRYPOINT:
+			docker run ubuntu-sleeper 10
+				=> container run with arg appended to ENTRYPOINT "sleep 10" 
+		run without arg:
+			docker run ubuntu-sleeper
+				=> error
+
+	- Combine CMD with ENTRYPOINT
+		ex:
+			FROM Ubuntu
+			ENTRYPOINT ["sleep"]
+			CMD ["5"]
+
+		run with arg passed to ENTRYPOINT:
+			docker run ubuntu-sleeper 10
+				=> container run with arg appended to ENTRYPOINT "sleep 10" 
+		run without arg:
+			docker run ubuntu-sleeper
+				=> container run with CMD appended to ENTRYPOINT "sleep 5" 
+
+		when we want to override ENTRYPOINT to another instruction:
+			docker run --entrypoint sleep2.0 ubuntu-sleeper 10
+				=> container run with arg appended to overrided ENTRYPOINT "sleep2.0 10"
+
+2. Security in Docker:
+	- Unlike virtual machines containers are not completely isolated from their host. 
+
+	- Containers and the hosts share the same kernel. Containers are isolated using namespaces in Linux. The host has a namespace and the containers have their own namespace. 
+		=> All the processes run by the containers are in fact run on the host itself, but in their own namespaces.				
+		
+	- Container runs in its own namespace and it can see its own processes only, cannot see anything outside of it or in any other namespace. So when you list the processes from within the docker container you only see processes run in this container
+
+	- For the docker's host, all processes of its own as well as those in the child namespaces are visible as just another process in the system. So wen you list the processes on the host you see a list of processes including the container's process, but with a different process ID. This is because the processes can have different process IDs in different namespaces and 
+		=> that’s how Docker isolates containers within a system. So that’s process isolation.
+
+
+	- The docker's host has a set of users. By default docker runs processes within containers as the root user
+
+		=>If you do not want the process within the container to run as the root user, you may set the user using the user option with the docker run command and specify the new user ID.
+		ex:
+				FROM ubuntu
+				USER 1001
+
+	- By default docker runs processes within containers as the root user => docker implements a set of security features that limits the abilities of the root user within the container. So the root user within the container isn’t really like the root user on the host. 
+
+		=> If you wish to override this behavior and provide additional privileges than what is available use the cap-add option in the docker run command.
+
+		ex:
+			add capability to root inside container
+				docker run --cap-add MAC_ADMIN ubuntu
+
+			remove capability from root inside container:
+				docker run --cap-drop KILL ubuntu
+
+
+		NOTE: Linux Capabilities:
+			- CHOWN
+			- DAC
+			- KILL
+			- SETFCAP
+			- SETPCAP
+			- SETGID
+			- SETUID
+			- NET_BIND
+			- NET_RAW
+			- MAC_ADMIN
+			- BROADCAST
+			- NET_ADMIN
+			- SYS_ADMIN
+			- SYS_CHROOT
+			- AUDIT_WRITE
+			- MANY MORE...
+
+ 
+
+
+ 
+  
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

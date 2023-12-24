@@ -1,0 +1,50 @@
+Headless Service:
+- Headless service is created like a normal service (Cluster IP, NodePort) but:
+	- it does not have an IP of its own
+	- it does not perform any load balancing
+	=> all it does is create DNS entries for each pod using the pod name and a subdomain:
+		<pod-name>.<headless-service-name>.<namespace>.<clusterdomain>
+
+		ex:
+			mysql-0.mysql-hlservice.default.svc.cluster.local
+			mysql-1.mysql-hlservice.default.svc.cluster.local
+			mysql-3.mysql-hlservice.default.svc.cluster.local
+
+
+- Usecase: we want service not load balance (we dont want the traffic come into the service is balanced across all the pods in the deployment)
+	for ex: 
+		- we have a master/slave replica set of mongodb deployed with Stateful Sets. We want:
+			- the write request only goes to master pod 
+			- the read request load balance acrpss all pods 
+
+		- with headless service:	
+			mysql-0.mysql-hlservice.default.svc.cluster.local -> master
+			mysql-1.mysql-hlservice.default.svc.cluster.local
+			mysql-3.mysql-hlservice.default.svc.cluster.local
+
+			=> we can routing request in our application with DNS record
+
+- Headless Service usually used with Stateful-Sets	
+
+
+- Template:
+	apiVersion: v1
+	kind: Service
+	metadata:
+	  name: my-hlservice
+	spec:
+	  ports:
+	    - port: xxxx
+	  selector:
+	    app: mypod-type // -> Match the labels of pod in template
+	  clusterIP: None    #THIS IS DIFF WITH NORMAL SERVICE!!!!
+
+
+
+	
+
+
+
+
+
+

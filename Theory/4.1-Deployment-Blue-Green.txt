@@ -1,0 +1,174 @@
+There're 2 deployment strategies supported by k8s "Deployment" object:
+	- Recreate
+	- Rolling update (default)
+
+There're other deployment strategies as well (which is not supported directly from "Deployment" object, they're implemented in a different way)
+	- Blue/Green: 
+		- A deployment strategy where we have the new version deployed (Green) along side with old version deployed (Blue), 100% traffice is still routed to old version (Blue)
+		- when testing process on new version (Green) is done -> we switch traffic to new version all at once
+		- Implement:
+			1 - We have a Blue Deployment with label "version:v1"
+
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  name: myapp-deployment
+				  labels:
+				    app: myapp
+				spec:
+				  replicas: 5
+				  selector:
+				    matchLabels:
+				      version:v1
+				  template:
+				    metadata:
+				      name: myapp-pod
+				      labels:
+				        version:v1
+				    spec:
+				      containers:
+				      - name: mypod-container
+				        image: xxx:1.0
+						
+					
+			
+			2 -  We have a Service with selector point to Blue Deployment
+
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  name: myapp-service
+				  labels:
+				    app: myapp
+				spec:
+				  selector:
+				    version:v1
+
+			
+			3 - We have a Green Deployment with label "version:v2"
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  name: myapp-deployment
+				  labels:
+				    app: myapp
+				spec:
+				  replicas: 5
+				  selector:
+				    matchLabels:
+				      version:v2
+				  template:
+				    metadata:
+				      name: myapp-pod
+				      labels:
+				        version:v2
+				    spec:
+				      containers:
+				      - name: mypod-container
+				        image: xxx:2.0
+
+
+			4 - When testing process on new version (Green) is done -> we switch traffic to new version all at once by changing service's selector
+
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  name: myapp-service
+				  labels:
+				    app: myapp
+				spec:
+				  selector:
+				    version:v2
+
+
+			5 - We can now delete Blue Deployment
+
+
+	- Canary:
+		- In this kind of strategy, we running a deployment with new version of application (new container's image), and route only a small percentage of traffice to it (by setting small number of replicas) => the majority traffic is routed to old version 
+		- when testing process is done successfully, we update all container's image in old deployment to new version and delete new deployment
+		- Implement:
+
+			1 - We have a primary Deployment with 5 replicas, with label "version:v1" & "app: front-end"
+				
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  name: myapp-deployment
+				  labels:
+				    app: myapp
+				spec:
+				  replicas: 5
+				  selector:
+				    matchLabels:
+				      version: v1
+				  template:
+				    metadata:
+				      name: myapp-pod
+				      labels:
+				        version: v1
+				        app: front-end
+				    spec:
+				      containers:
+				      - name: mypod-container
+				        image: xxx:1.0
+
+
+
+			2 -  We have a Service with selector point to "app:front-end"
+
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  name: myapp-service
+				  labels:
+				    app: myapp
+				spec:
+				  selector:
+				    app: front-end
+
+
+
+			3 - We deploy a canary Deployment with small number of replicas (in this case = 1), with label "version:v2" & "app: front-end"
+
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  name: myapp-deployment
+				  labels:
+				    app: myapp
+				spec:
+				  replicas: 5
+				  selector:
+				    matchLabels:
+				      version: v2
+				  template:
+				    metadata:
+				      name: myapp-pod
+				      labels:
+				        version: v2
+				        app: front-end
+				    spec:
+				      containers:
+				      - name: mypod-container
+				        image: xxx:2.0
+
+
+
+			4 - traffic will be routed to both version as service's selector is "app:front-end" => 83% to primary, 17% to canary
+
+			5 - When testing process is done ->  we update all container's image in primary deployment to new version "xxx:2.0" and delete canary deployment
+
+
+
+
+
+
+
+
+
+
+
+
+
+

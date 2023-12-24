@@ -1,0 +1,75 @@
+Helm work as package manager in k8s
+	- the core thing is that Helm lets us treat our k8s apps as apps instead of just a collection of objects
+	=> we dont have to manage each k8s object anymore
+
+- Installing Helm
+	https://helm.sh/docs/intro/install/
+
+	test:
+	helm version
+	helm --help
+
+
+- Helm chart
+	- Templates files - all k8s manifest files (deployments, services, pv, pvc, secrets, configmaps, ...) with variables (ex: storage size, ports, username, password, ...)
+
+	- values.yaml file - consist chart's env variables
+
+	=> Templates files + values.yaml file = final k8s manifest files 
+
+
+	- Chart.yaml file - consist information of chart: chart's name, version, description, ...
+
+	- Helm search:
+		https://artifacthub.io/
+		https://charts.bitnami.com/bitnami
+
+
+		helm search hub wordpress
+		
+		helm repo add bitnami https://charts.bitnami.com/bitnami
+
+		help repo list
+
+		helm search repo wordpress
+
+
+	- Commands:
+
+		helm install <release-name> <chart-name>
+		helm list
+		helm uninstall <release-name>
+
+		ex:
+			helm install my-drupal bitnami/drupal
+			helm list
+			helm uninstall my-drupal
+
+
+		helm pull --untar <chart-name>
+		=> just download & untar chart, not install
+
+		ex:
+
+			helm pull --untar bitnami/wordpress
+				
+			ls wordpress
+
+			vi ./wordpress/values.yaml 
+
+			helm install my-release-1 ./wordpress
+
+
+
+
+
+
+
+helm install wordpress
+helm upgrade wordpress
+helm rollback wordpress
+helm uninstall wordpress
+
+
+
+

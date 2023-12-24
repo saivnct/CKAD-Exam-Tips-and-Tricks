@@ -1,0 +1,58 @@
+Node Selector: 
+
+1. labels the node
+	kubectl label nodes <node-name> <label-key>=<label-value>
+	
+	ex:
+		kubectl label nodes node1 color=Blue
+		kubectl describe node node1
+		kubectl get node node1 --show-labels
+
+	remove labels:
+        kubectl label nodes node1 color-
+
+2. Limit the pods only run on particular nodes with matching labels
+	- template
+
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: myapp-pod
+		  labels:
+		    app: myapp
+		    type: mypod-type
+		spec:
+		  containers:
+		  - name: mypod-container
+		    image: xxx
+		  
+		  nodeSelector:
+		    color: Blue
+		    nodeName: <node-name>
+
+3. Limit the pods only run on particular nodes with matching name
+    - template
+
+        apiVersion: v1
+		kind: Pod
+		metadata:
+		    name: myapp-pod
+		    labels:
+		        app: myapp
+		        type: mypod-type
+		spec:
+		    nodeName: <node-name>
+		    containers:
+		    - name: mypod-container
+		      image: xxx
+
+
+
+
+
+
+
+
+
+
+              

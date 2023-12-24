@@ -1,0 +1,92 @@
+Namespace:
+	- default namespace is 'default'
+	- k8s create a namespace for system 'kube-system'
+	- each namespace has it own policies and resources (hardware) => guarateed a certain amount and does not use more than its allowed limit
+	- elements (pods, services, ...) within 1 namespace can refer to each other by their name
+	 	=> to refer to the service in another namespace for ex 'db-service' in 'dev' namespace: 'db-service.dev.svc.cluster.local' 
+	 		cluster.local: default domain name of k8s cluster
+	 		svc: subdomain for service
+
+	- template:
+
+		apiVersion: v1
+		kind: Namespace
+		metadata:
+		  name: dev
+
+	- to limit resouce within a namespace => create resource quota
+		
+		apiVersion: v1
+		kind: ResourceQuota
+		metadata:
+		  name: compute-quota
+		  namespace: dev
+		spec:
+		  hard:
+		    pods: "10"
+		    requests.cpu: "4"
+		    requests.memory: 5Gi
+		    limits.cpu: "10"
+		    limits.memory: 10Gi
+
+
+
+
+basic commands:
+	kubectl create -f my-namespace.yml
+	kubectl create -f my-compute-quota.yml
+
+	kubectl create namespace my-new-namespace --dry-run=client -o yaml
+	=> create yml file but dont create/run namespace (--dry-run=client)
+
+	kubectl get namespaces
+
+	pods in namespace:
+		kubectl create -f my-pod.yml
+			=> create pod in default namespace
+		kubectl create -f my-pod.yml --namespace=dev
+			=> create pod in dev namespace
+
+		kubectl get pods
+			=> get pods in default namespace
+		kubectl get pods --namespace==kube-system
+		kubectl get pods -n==kube-system
+			=> get pods in kube-system namespace
+		kubectl get pods --all-namespaces
+		kubectl get pods -A
+			=> get pods in all namespaces
+
+
+
+
+	In case we dont want to use --namespace:
+	1. Change permanent namespace from 'default' to other:
+		kubectl config set-context $(kubectl config current-context) --namespace=dev
+
+		kubectl get pods
+		=> get pods in dev namespace
+
+	2. we set it in the "metadata":
+
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  namespace: dev
+			  labels:
+			    app: myapp
+			    type: mypod-type
+			spec:
+			  containers:
+			  - name: mypod-container
+			    image: xxx
+
+
+
+
+
+			    
+
+
+
+

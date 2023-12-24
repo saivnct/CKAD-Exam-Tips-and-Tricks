@@ -1,0 +1,61 @@
+Services:
+	- type:
+		- NodePort: Expose to external
+			=> Loadbalancer algorithm: Random
+		- ClusterIP (default): Intercommunicate between pods, this kind of service can be accessed by others using clusterIp or service name
+		- LoadBalancer: Expose to external + Loadbalancer (only on Cloud Provider AWS,GKC,Azure...)
+	
+	- template:
+
+		apiVersion: v1
+		kind: Service
+		metadata:
+		  name: myapp-service
+		  labels:
+		    app: myapp
+		spec:
+		  type: NodePort		# NodePort/ClusterIP
+		  ports:
+		    - targetPort: 80 # pod's port (if we dont provide "targetPort" => assume to be the same with "port")
+		      port: 80 			# service's port
+		      nodePort: 30000 # only if type=NodePort, VM port (30000-32767) (if we dont provide "nodePort" => a free port between 30000-32767 on VM will be chosen)
+		  selector:
+		    type: mypod-type # -> Match the labels of pod in template
+
+
+
+basic commands:
+	kubectl get service
+	kubectl describe service myapp-service
+
+	minikube service <nodeport-service-name> --url
+
+
+	kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml
+		=> create yml file but dont create/run (--dry-run=client) Service named redis-service of type ClusterIP to expose pod redis on port 6379
+		=> This will automatically use the pod's labels as selectors
+
+
+	kubectl expose pod nginx --port=80 --name nginx-service --type=NodePort --dry-run=client -o yaml
+		=> create yml file but dont create/run (--dry-run=client) a Service named nginx of type NodePort to expose pod nginx's port 80 on port 30080 on the nodes:
+		=> This will automatically use the pod's labels as selectors
+		=> you cannot specified the node port
+
+
+	kubectl run httpd --image=httpd:alpine --port=80 --expose=true
+		=> Create a pod called httpd using the image httpd:alpine in the default namespace. Next, create a service of type ClusterIP by the same name (httpd). The target port for the service should be 80.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

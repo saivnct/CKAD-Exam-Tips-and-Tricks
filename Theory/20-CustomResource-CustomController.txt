@@ -1,0 +1,118 @@
+Resources & Controllers in k8s:
+	- Resource: When we create an object (ex: Deployment), k8s stores its information in etcd db. We can:
+		- create object
+			kubectl create -f my-deployment.yml
+		- list object
+			kubectl get deployments
+		- delete object
+			kubectl delete -f my-deployment.yml
+
+	- Controller: is the process that run in the background adn reponsible for:
+		- continuously monitoring the Resource's status
+		- when we create/update/delete the Resource => Base on these events, controller makes necessary changes on cluster
+
+		- controller is written in Go
+
+	=> each Resource has a Controller with it
+
+
+
+
+
+Custom Resource Definition (CRD)
+	- beside k8s built-in Resouces, we can create custom Resources using (CRD)
+
+	1. create Custom Resource:
+
+		apiVersion: apiextensions.k8s.io/v1
+		kind: CustomResourceDefinition
+		metadata:
+		  name: flighttickets.flights.com
+		spec:
+		  scope: Namespaced    # Namespaced scope
+		  group: flights.com
+		  names: 
+		    kind: FlightTicket
+		    singular: flightticket     
+		    plural: flighttickets     #use in kubectl
+		    shortNames:
+		      - ft
+		  versions:
+		    - name: v1
+		      served: true      # preferred version
+		      storage: true      # storage version
+
+		      schema: 
+		        openAPIV3Schema:
+		          type: object
+		          properties:
+		            spec:
+		              type: object
+		              properties:
+		                from:
+		                  type: string
+		                to:
+		                  type: string
+		                number:
+		                  type: integer
+		                  minimum: 1
+		                  maximum: 10
+
+
+		=> kubectl create -f my-crd-flighttickets.yml
+
+
+	2. using Cutom Resource:
+	
+		apiVersion: flights.com/v1    #group: flights.com
+		kind: FlightTicket
+		metadata:
+		  name: my-flight-ticket
+		spec:
+		  from: hochiminh
+		  to: hanoi
+		  number: 2
+
+
+	3. we can now interact on object created from Custom Resource:
+		kubectl create -f my-flight-ticket.yml
+
+		kubectl get flighttickets
+
+		kubectl delete -f my-flight-ticket.yml
+
+
+
+
+Developing Custom Controller: 
+	- using Go k8s cluster clib
+	- sample at:
+		git clone https://github.com/kubernetes/sample-controller
+
+		- cd sample-controller
+
+		- modify controller.go -> code logic handle base on Custom Resource's events
+
+		- build
+			go build -o my-controller-flighttickets .
+
+		- run 
+			./my-controller-flighttickets -kubeconfig=$HOME/.kube/config
+
+	- distribute Custom controller
+		- create docker image from go code
+
+		- run inside k8s cluster as a Pod or a Deployment
+
+
+
+
+
+
+
+
+
+
+
+
+

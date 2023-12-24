@@ -1,0 +1,41 @@
+Multi-container pod:
+- sometimes you may need two container to work together. Such as a web server and a logging service. 
+- We want two or more functionalities to work together:
+	- they share the same lifecycle (create and destroy together)
+	- they share the same network space, which means they can refer to each other as localhost
+	- they have access to the same storage volumes
+
+
+- template:
+
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: myapp-pod
+		  labels:
+		    app: myapp
+		spec:
+		  containers:
+		  - name: simple-webapp
+		    image: simple-webapp
+		    ports:
+		      - containerPort: 8080
+		  - name: log-agent
+		    image: log-agent
+
+
+- Multi-container pod Design patterns:
+	- Sidecar container
+		ex: deploying a logging agent alongside a web server to collect logs and forward them to central log center
+	- Adapter container
+		ex: 
+		- we have many pods with many services. Every service generates logs in different format
+		- we will deploy an adapter along side with services in pod that convert services's log to common format and push to central log center
+	- Ambassador container
+		ex:
+		- our application must connect to different type of database at different stage of development (local dev db, test db, staging db, production db,...) => we must make sure to modify the connection to right db depending on the environment that we're deploying our application to.
+		- we will deploy an additional container within the pod that help our app to route request to right db 
+
+
+
+

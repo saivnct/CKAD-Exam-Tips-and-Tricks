@@ -1,0 +1,96 @@
+1. Storage Provisioning
+	- to create PVC, we must create PV manually. Example on google cloud:
+
+		1. Create a disk on google cloud:
+			gcloud beta compute disks create --size 1GB \
+			--region us-east1 pd-disk
+
+		2. Creat PV:
+
+			apiVersion: v1
+			kind: PersistentVolume
+			metadata:
+			  name: my-pv
+			spec:
+			  capacity:
+			    storage: 500Mi
+			  accessModes:
+			    - ReadWriteMany
+			  gcePersistentDisk:
+			    pdName: pd-disk
+			    fsType: ext4
+
+	
+
+2. Storage Class (Dynamic Provisioning):
+	- with Storage Class:  you can define a provisioner for ex Google Storage that can automatically provision storage on Google CLoud and attach that to pods when claim is made 
+
+	- Steps:
+		a. Define StorageClass:
+
+			apiVersion: storage.k8s.io/v1
+			kind: StorageClass
+			metadata:
+			  name: my-google-storage
+			provisioner: kubernetes.io/gce-pd
+			parameters:
+			  type: pd-standard      # pd-standard/pd-ssd
+			  replication-type: none    # none/regional-pd
+
+
+		NOTE: google cloud storage
+			- silver SC:
+				parameters:
+				  type: pd-standard    
+				  replication-type: none	
+
+			- gold SC:
+				parameters:
+				  type: pd-ssd    
+				  replication-type: none
+
+			- platinum SC:
+				parameters:
+				  type: pd-ssd    
+				  replication-type: regional-pd  
+
+
+
+		b. Create PVC (dont need create PV):
+		
+			apiVersion: v1
+			kind: PersistentVolumeClaim
+			metadata:
+			  name: my-pv-claim
+			spec:
+			  accessModes:
+			    - ReadWriteMany    
+			  resources:
+			    requests:
+			      storage: 50Mi   
+			  storageClassName: my-google-storage
+
+		c. Attach to pods
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		

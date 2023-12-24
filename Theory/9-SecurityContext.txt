@@ -1,0 +1,48 @@
+Security context:
+	- Security context specify onbehafl of which user (of linux system) the container inside pod will be run
+	- Default user is root with limit restriction, but we want to add more capabilities by setting securityContext
+	- There're 2 levels of security context:
+		- pod level: will affect all containers in pod
+
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  labels:
+			    app: myapp
+			    type: mypod-type
+			spec:
+			  securityContext:
+			    runAsUser: 1000
+			  containers:
+			  - name: mypod-container
+			    image: xxx
+
+
+		- container level
+
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  labels:
+			    app: myapp
+			    type: mypod-type
+			spec:
+			  containers:
+			  - name: mypod-container
+			    image: xxx
+			    securityContext:
+			      runAsUser: 1000		# default not set => root
+			      capabilities:
+			        add: ["NET_ADMIN", "SYS_TIME"]
+
+
+Notes:
+	capabilities are only support at the container level!
+
+
+
+
+
+	

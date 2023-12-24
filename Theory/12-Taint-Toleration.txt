@@ -1,0 +1,49 @@
+-Taints And Tolerations:
+
+- Placing a Taint on a node => prevent all pods from being placed on that node
+	- template:
+		kubectl taint nodes <node-name>	 <key=value>:<taint-effect>
+	
+	- taint-effect: what happens to PODs that DO NOT TOLERATE tained node
+		- NoSchedule: pods will not 
+		- PreferNoSchedule: scheduler try to avoid placing pods on the node, but that is not guaranteed
+		- NoExecute: new pod will not be scheduled on the node, existing pods will be terminated
+
+		ex:
+		kubectl taint nodes node1 app=blue:NoSchedule
+
+
+- Add Toleration to a pod => Allow pod to be placed on Tainted node
+	- by default, pods have no toleration
+
+	- template:
+	
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: myapp-pod
+		  labels:
+		    app: myapp
+		    type: mypod-type
+		spec:
+		  containers:
+		  - name: mypod-container
+		    image: xxx
+		  
+		  tolerations:    # must be same with tainted node
+		  - key: "app"  
+		    operator: "Equal"
+		    value: "blue"
+		    effect: "NoSchedule"
+
+NOTE:
+ - By default, the scheduler does not schedule any pods on the master node => When setup cluster, a tain is automatically placed on master node:
+ 	node-role.kubernetes.io/master:NoSchedule
+
+
+NOTE: In pratical, we ussualy combie Taint-Toleration with Node Affinity to force pods go to right nodes
+
+
+
+
+ 	

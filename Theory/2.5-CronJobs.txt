@@ -1,0 +1,36 @@
+CronJobs: The Jobs that can be scheduled
+
+- template:
+
+		apiVersion: batch/v1beta1
+		kind: CronJob
+		metadata:
+		  name: my-cron-job
+		spec:
+		  schedule: "*/1 * * * *"
+		  jobTemplate:            #spec section of job
+		    spec:
+		      completions: 3      # default = 1
+		      parallelism: 3      # default = 1
+		      backoffLimit: 25      # optional -> specify the number of retries before considering a Job as failed
+		      activeDeadlineSeconds: 20  # optional -> Once a Job reaches activeDeadlineSeconds, all of its running Pods are terminated and the Job status will become type: Failed with reason: DeadlineExceeded
+
+		      template:
+		        spec:
+		          containers:
+		          - name: reporting-tool
+		            image: reporting-image
+		          restartPolicy: Never
+
+
+
+
+basic commands:
+	kubectl create -f my-job.yml
+
+	kubectl get cronjob
+
+
+
+
+	

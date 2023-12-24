@@ -1,0 +1,89 @@
+KIND 					|	            |   Version
+						|               |
+Pod						|   po	        |   v1
+Job						|               |	batch/v1
+CronJob					|   cj          |	batch/v1beta1
+						|               |
+Service 				|   sv          |	v1
+Ingress					|   ing         |	networking.k8s.io/v1
+NetworkPolicy			|   netpol      |	networking.k8s.io/v1
+						|               |
+ReplicationController 	|               |	v1
+Replicaset 				|   rs          |	app/v1
+Deployment 				|   deploy      |	app/v1
+StatefulSet				|   sts         |	app/v1
+						|               |
+Namespace				|	ns          |   v1
+						|               |
+ConfigMap				|	cm          |   v1
+						|               |
+ResourceQuota			|	quota       |   v1
+LimitRange				|   limits      |	v1
+						|               |
+PersistentVolume 		|   pv          |	v1
+PersistentVolumeClaim	|   pvc         |	v1
+						|               |
+Role	                |   pvc         |	rbac.authorization.k8s.io/v1
+RoleBinding         	|   pvc         |	rbac.authorization.k8s.io/v1
+						|               |
+ClusterRole         	|   pvc         |	rbac.authorization.k8s.io/v1
+ClusterRoleBindind      |   pvc         |	rbac.authorization.k8s.io/v1
+
+
+
+k8s base template:
+	
+	apiVersion:
+	kind:
+	metadata:
+	  name:
+	  labels:
+	spec:
+
+
+
+basic commands:
+	kubectl cluster-info
+	kubectl get	nodes
+
+	kubectl api-resources
+
+	kubectl explain pod
+	kubectl explain pod.spec.containers
+	kubectl explain pod.spec.affinity
+	kubectl explain pod.spec.containers.securityContext
+	kubectl explain deployment
+
+
+	
+	kubectl get all
+		=> show all deployments, replicaset, pods, services
+
+	kubectl config current-context
+		=> get current context
+
+	- help:
+		kubectl explain pod
+		kubectl explain replicaset
+		kubectl create deployment --help
+
+
+ls -la /etc/kubernetes/manifests/
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+cat /etc/kubernetes/manifests/etcd.yaml
+
+
+TIPs:
+	- check connection from a pod to a service:
+		kubectl exec -it <pod-name> -- sh
+		nc -v -z -w 2 <service-name> <service-port>
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,56 @@
+Monitoring: 
+	- We want to know:
+		-  Node level metrics such as the number of nodes in the cluster, how many of them are healthy  
+		- Performance metrics such as CPU. Memory, network and disk utilization.
+		- POD level metrics such as the number of PODs, and performance metrics of each POD such the CPU and Memory consumption
+
+		=> Kubernetes does not come with a full featured built-in monitoring solution
+
+	- Open-source solutions:
+		- Metrics Server
+		- Prometheus
+		- ELK (Elastic Stack)
+		- Datadog
+		- Dynatrace
+
+
+Metrics Server:
+	- The metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregates them and stores them in memory. 
+
+	NOTE: the metrics server is only an in-memory monitoring solution and does not store the metrics on the disk, and as a result you cannot see historical performance data
+
+
+	How are the metrics generated for the PODs on these nodes? 
+		- Kubernetes runs an agent on each node known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server and running PODs on the nodes. 
+		- The kubelet also contains a subcomponent known as as cAdvisor or Container Advisor. cAdvisor is responsible for retrieving performance metrics from pods, and exposing them through the kubelet API to make the metrics available for the Metrics Server.
+
+	- installation:
+		- minikube:
+			minikube addons enable metrics-server
+		- k8s:
+			git clone https://github.com/kubernetes-incubator/metrics-server.git
+
+			kubectl create –f deploy/1.8+/
+
+	- monitoring
+		kubectl top node
+
+		kubectl top pod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		

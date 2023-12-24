@@ -1,0 +1,60 @@
+Pod vs Jobs:
+- Pod - use for kind of workload run for long period of time until we manually take it down, auto restart when dead
+
+- Jobs - use for kind of workload such as batch processing, computation, analytics, reporting ... that are used to carry out specific task and then finish (live for short period of time, not restart)
+	- we can make Pod to do a job by setting "restartPolicy: Never" in spec -> k8s will not auto restart pod when finishing
+
+		-> but what if we want to split the job and run in multiple pods to process jobs in parallel? We also want to make sure that all pods perform the task assigned to them successfully and then exit
+
+		=> So we need a manager that can create as many pods as we want to get a work done and ensure that the work get done successfully.
+
+		=> That is what JOBs in Kubernetes do
+
+
+- template:
+
+		apiVersion: batch/v1
+		kind: Job
+		metadata:
+		  name: math-add-job
+		spec:
+		  completions: 3      # default = 1
+		  parallelism: 3      # default = 1
+		  backoffLimit: 25      # optional -> specify the number of retries before considering a Job as failed
+		  activeDeadlineSeconds: 20  # optional -> Once a Job reaches activeDeadlineSeconds, all of its running Pods are terminated and the Job status will become type: Failed with reason: DeadlineExceeded
+
+		  template:
+		    spec:
+		      containers:
+		      - name: math-add
+		        image: ubuntu
+		        command: ["expr", "3", "+", "2"]
+		      restartPolicy: Never
+
+
+
+- completions: the desired number of pod to do the jobs (by default 1)
+	- if completions > 1 :
+		- by default, the pods are created one after the other 
+		- The second pod is created only after the first is finished with successful
+		- In case any pod is failed => k8s will recreate and run pod until successful reach the "completions number" (in example above is 3 = 3 successful is required)
+
+- parallelism: Instead of getting the pods created sequentially (by default), we can get them created in parallel. For this add a property called parallelism to the job specification. In example above, we set it to 3 to create 3 pods in parallel
+
+
+basic commands:
+	kubectl create -f my-job.yml
+
+	kubectl get jobs
+
+	kubectl get pods
+
+	kubectl logs <pod-name>
+	-> get the output of the job
+
+	kubectl delete job math-add-job
+
+
+
+
+

@@ -1,0 +1,43 @@
+replicaset vs replication controller:
+	- replicaset has property "selector"
+	- replicaset is replacement for replication controller(old tech, doesnt have selector)
+	- replicaset take care of matching pods (in selector), even if they were created before.
+	- template:
+
+		apiVersion: apps/v1
+		kind: ReplicaSet
+		metadata:
+		  name: myapp-replicaset
+		  labels:
+		    app: myapp
+		    type: myapp-type
+		spec:
+		  template:
+		    \\\\\\\\\\\\\\\\\\\\
+		    \\POD TEMPLATE HERE\\
+		    \\\\\\\\\\\\\\\\\\\\
+		  replicas: n
+		  selector:
+		    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+		    \\matchLabels - matchExpressions   -> math the pod   \\
+		    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+		    matchLabels:
+		      type: mypod-type // -> Match the labels of pod in template
+
+basic commands:
+	kubectl create -f my-replicaset.yml
+
+	kubectl get replicaset
+	kubectl describe replicaset myapp-replicaset
+	kubectl delete replicaset myapp-replicaset
+
+	Scale:
+		kubectl replace -f my-replicaset.yml
+		kubectl scale --replicas=6 -f xxx.yml
+		kubectl scale replicaset myapp-replicaset --replicas=4
+		kubectl edit replicaset myapp-replicaset
+
+
+
+
+		

@@ -1,0 +1,210 @@
+
+- Working with Deployments:
+	- the pods dont have constant hostname or address => They're got random name and address
+	- Deployement does not guarantee the pod order, all the pod are deployed at the same time
+
+- Stateful Sets:
+	- Similar to Deloyment:
+		- create pods base on template
+		- can scale up/down
+		- rolling updates/rollbacks
+	- Diff with Deployment:
+		- By default, Pods in Statefule Sets are created in sequential order (current pods must be running and in ready state before next Pod is deployed)
+
+		- Stateful Sets assign a unique original index to each Pod (from 0), each pod gets a unique name derived from this index in combined with the Stateful Sets's name (no more random name)
+			ex: mysql-0, mysql-1, mysql-2, ....
+
+			=> We can rely on these names going forward: We can be ensure that the first POD in any Stateful Set is always to be: <stateful-set-name>-0  => we can always use tht as the master in any setup 
+
+			ex: mysql replicate set with 1 master and n slaves
+
+		- Scaleup -> create new pods in sequential order (start from last index count up)
+		- Scaledown -> delete pods in sequential order (start from last index count down)
+
+
+
+- Template:
+
+	apiVersion: apps/v1
+	kind: StatefulSet
+	metadata:
+	  name: myapp-statefulset
+	  labels:
+	    app: myapp
+	spec:
+	  template:
+	    \\\\\\\\\\\\\\\\\\\\
+	    \\POD TEMPLATE HERE\\
+	    \\\\\\\\\\\\\\\\\\\\
+	  replicas: n
+	  selector:
+	    matchLabels:
+	      type: mypod-type // -> Match the labels of pod in template
+	  serviceName: my-headless-servicename 	#THIS IS DIFF WITH DEPLOYMENT!!!!
+
+
+
+	=> we must specify the name of a headless service (diff with Deployment)
+
+- NOTE: if we dont want pods to create/scaleup/scaledown in sequential (some features: stable and unique network ID are still there!!!!) => we set "podManagementPolicy: Parallel"
+
+		apiVersion: apps/v1
+		kind: StatefulSet
+		metadata:
+		  name: myapp-statefulset
+		  labels:
+		    app: myapp
+		spec:
+		  template:
+		    \\\\\\\\\\\\\\\\\\\\
+		    \\POD TEMPLATE HERE\\
+		    \\\\\\\\\\\\\\\\\\\\
+		  replicas: n
+		  selector:
+		    matchLabels:
+		      type: mypod-type // -> Match the labels of pod in template
+		  serviceName: my-headless-servicename
+		  podManagementPolicy: Parallel    # default is OrderedReady
+
+
+
+basic commands:
+
+	kubectl create -f my-statefulset.yml --record
+		=> record option instructs K8s to record the cause of change in statefulset's revision
+
+	kubectl get statefulset
+	kubectl describe statefulset myapp-statefulset
+
+
+	Scale:
+		kubectl scale --replicas=4 -f xxx.yml
+		kubectl scale statefulset myapp-statefulset --replicas=4
+
+
+
+
+
+- Storage in Stateful Sets:
+	1. Default behaviors: all the pods using the same PVC (Persistent Volume Claim) = the same storage:
+		PV -> PVC -> Pod-0, Pod-1, Pod-2, ...
+
+		a. Create PV, PVC:
+
+			apiVersion: v1
+			kind: PersistentVolumeClaim
+			metadata:
+			  name: my-pv-claim
+			spec:
+			  accessModes:
+			    - ReadWriteMany    
+			  resources:
+			    requests:
+			      storage: 500Mi   
+			  storageClassName: my-google-storage
+
+
+		b. Create Stateful Sets:
+
+			apiVersion: apps/v1
+			kind: StatefulSet
+			metadata:
+			  name: myapp-statefulset
+			  labels:
+			    app: myapp
+			spec:        
+			  replicas: n
+			  selector:
+			    matchLabels:
+			      type: mypod-type 
+			  serviceName: my-headless-servicename
+			  template:
+			    metadata:
+			      name: myapp-pod
+			      labels:
+			        type: mypod-type
+			    spec:
+			      containers:
+			      - name: mypod-container
+			        image: xxx
+			        volumeMounts:
+			        - mountPath: /path/to/mount/path
+			          name: data-volume
+			      volumes:
+			        - names: data-volume
+			          persistentVolumeClaim:
+			            claimName: my-pv-claim
+
+
+	2. If we want every pod use has PVC for itsefl:
+		PV0 -> PVC0 -> Pod-0 (if Pod-0 dead -> Stateful Sets re-create Pod-0 and mount to PVC0 again => we dont lose PVC when Pod die)
+		PV1 -> PVC1 -> Pod-1
+		PV2 -> PVC2 -> Pod-2
+
+		=> use case: Mysql replicate set
+
+		Create Stateful Sets that include PVC inside:
+			
+			apiVersion: apps/v1
+			kind: StatefulSet
+			metadata:
+			  name: myapp-statefulset
+			  labels:
+			    app: myapp
+			spec:        
+			  replicas: n
+			  selector:
+			    matchLabels:
+			      type: mypod-type 
+			  serviceName: my-headless-servicename
+			  template:
+			    metadata:
+			      name: myapp-pod
+			      labels:
+			        type: mypod-type
+			    spec:
+			      containers:
+			      - name: mypod-container
+			        image: xxx
+			        volumeMounts:
+			        - mountPath: /path/to/mount/path
+			          name: data-volume
+
+			  volumeClaimTemplates:
+			  - metadata:
+			      name: my-pv-claim
+			    spec:
+			      accessModes:
+			        - ReadWriteMany    
+			      resources:
+			        requests:
+			          storage: 500Mi   
+			      storageClassName: my-google-storage
+
+
+
+
+					
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

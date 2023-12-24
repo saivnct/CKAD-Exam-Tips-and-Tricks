@@ -1,0 +1,103 @@
+- Cluster roles: 
+	- the same with RBAC Role(RBAC Role only work for namespace resource) except they're for cluster scoped resources
+
+
+	- Template:
+
+			apiVersion: rbac.authorization.k8s.io/v1
+			kind: ClusterRole
+			metadata:
+			  name: cluster-administrator
+			rules:
+			- apiGroups: [""]         
+			  resources: ["nodes"]
+			  verbs: ["list", "create", "get", "delete"]
+
+
+	- commands:
+		kubectl create -f cluster-administrator-role.yaml
+
+		kubectl create clusterrole --help
+		kubectl create clusterrole <clusterrole-name> --verb=get,list,watch --resource=nodes
+
+		kubectl create clusterrole my-cluster-role --verb=get,list,watch --resource=nodes
+
+		kubectl create clusterrole my-cluster-role-storage --verb=create,get,list,watch --resource=persistentvolumes,storageclasses
+
+
+
+		kubectl get clusterroles
+
+		kubectl get clusterroles --no-headers | wc -l
+		=> count all clusterroles
+
+		kubectl describe clusterroles <clusterrole-name>
+
+	- test commands:
+		kubectl get nodes --as alice
+
+
+
+- Cluster roles binding: 
+	- the same with RBAC Role Binding(RBAC Role Binding only work for namespace resource) except they're for cluster scoped resources
+	- used to link Cluster roles to user
+
+
+	- Template:
+
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: ClusterRoleBindind
+		metadata:
+		  name: cluster-administrator-role-binding
+		subjects:
+		- kind: User
+		  name: cluster-admin
+		  apiGroup: rbac.authorization.k8s.io
+		roleRef:
+		  kind: ClusterRole
+		  name: cluster-administrator
+		  apiGroup: rbac.authorization.k8s.io
+
+
+
+	- commands:
+		kubectl create -f cluster-administrator-role-binding.yaml
+
+
+		kubectl create clusterrolebinding --help
+		kubectl create clusterrolebinding <clusterrole-binding-name> --clusterrole=<clusterrole-name> --user=user1 --user=user2 --group=group1
+
+		kubectl get clusterrolebindings
+
+		kubectl get clusterrolebindings --no-headers | wc -l
+		=> count all clusterroles
+
+		kubectl describe clusterrolebindings <clusterrole-binding-name>
+
+
+NOTE:
+	- ClusterRole & ClusterRoleBindind are used for cluster scoped resources
+	- But ClusterRole & ClusterRoleBindind can also used for namespace resrources as well => When we do that, the user will have access to these resources across all namespaces 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

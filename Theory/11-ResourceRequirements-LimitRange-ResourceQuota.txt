@@ -1,0 +1,132 @@
+Resource Requirements:
+- Thee kubernetes scheduler decides which Node a POD goes to. 
+- The scheduler takes into consideration, the amount of resources required by a POD and those available on the Nodes 
+	- If the node has no sufficient resources, the scheduler avoids placing the POD on that node
+	- If there is no sufficient resources available on any of the nodes, Kubernetes holds back scheduling the POD => the POD in a pending state. 
+	
+- Resource Requests: The minimum amount of CPU or Mem requested by a container.
+
+- Resource Limits: The limits of the resource (CPU, Mem) that a container can use
+
+- Measurement:
+		- 1 CPU = 1vCPU (AWS) = 1 Core (GCP, Azure) = 1 HyperThread
+		- Mem:
+			1 G (Gigabyte) = 1,000,000,000 bytes 
+			1 M (Megabyte) = 1,000,000 bytes
+			1 K (Kilobyte) = 1,000 bytes
+			
+			1 Gi (Gibibyte) = 1,073,741,824 bytes 
+			1 Mi (Mebibyte) = 1,048,576 bytes
+			1 Ki (Kibibyte) = 1,024 bytes
+
+
+- Exceed Limits happens when a pod tries to exceed resources beyond its specified limit:
+	- In case of the CPU, kubernetes throttles the CPU so that it does not go beyond the specified limit => A container cannot use more CPU resources than its limit
+	- A container CAN use more memory resources that its limit => If a pod tries to consume more memory than its limit constantly, the POD will be terminated (OOM - Out of memory)
+
+- Default Behavior: By default, K8s does not have a CPU or Mem request or limit set => any pod can consume as much resources as it need on any node and suffocate other pods or processes that're running on the node
+
+- Template
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: myapp-pod
+	  labels:
+	    app: myapp
+	    type: mypod-type
+	spec:
+	  containers:
+	  - name: mypod-container
+	    image: xxx
+	    resources:
+	      requests:
+	        memory: "1Gi"
+	        cpu: 1
+	      limits:
+	        memory: "2Gi"
+	        cpu: 2
+
+
+
+
+
+- Limit rage: define default Resource Requests & Resource Limits for all container in k8s cluster 
+	=> Applicable at the namespace level
+	=> The request & limit are enforced when a new pod is created (not existing pods)
+	- Template CPU:
+		
+		apiVersion: v1
+		kind: LimitRange
+		metadata:
+		  name: cpu-resource-constraint
+		spec:
+		  limits:
+		  - default:      # Limit
+		      cpu: 500m
+		    defaultRequest:  # Request
+		      cpu: 500m
+		    max:        # Limit
+		      cpu: "1"
+		    min:        # Request
+		      cpu: 100m
+		    type: Container
+
+
+	- Template Mem:
+		apiVersion: v1
+		kind: LimitRange
+		metadata:
+		  name: mem-resource-constraint
+		spec:
+		  limits:
+		  - default:      # Limit
+		      cpu: 1Gi
+		    defaultRequest:  # Request
+		      cpu: 1Gi
+		    max:        # Limit
+		      cpu: 1Gi
+		    min:        # Request
+		      cpu: 500Mi
+		    type: Container
+
+
+
+
+
+- Resource Quotas
+	- Restrict the total amount of resources that can be consumed by applications deploys in k8s cluster 
+		=> all the pods should'nt consume amount of CPU and Mem
+	- Create at namespace level
+	- Template:
+		
+		apiVersion: v1
+		kind: ResourceQuota
+		metadata:
+		  name: my-resource-quota
+		spec:
+		  hard:
+		    requests.cpu: 4
+		    requests.memory: 4Gi
+		    limits.cpu: 10
+		    limits.memory: 10Gi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

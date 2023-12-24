@@ -1,0 +1,327 @@
+- Ingress helps your clients access your application using a single Externally accessible URL, that you can configure to route to different services within your cluster based on the URL path, at the same time terminate TLS.
+
+- Think of ingress as a layer 7 load balancer built-in to the kubernetes cluster that can be configured using native kubernetes primitives just like any other object in kubernetes.
+
+NOTE: 
+	- with Ingress you still need to expose it to make it accessible outside the cluster. So you still have to either publish it as a NodePort or with a Cloud Native LoadBalancer. 
+	- But that is just a one time thing. Going forward you are going to perform all your load balancing, Auth, SSL and URL based routing configurations on the Ingress controller.
+
+
+- ingress controllers:
+	- GCP HTTP(s) Load balancer GCE - which is Googles Layer 7 HTTP Load Balancer
+	- NGINX
+	- Contour,
+	- HAPROX
+	- TRAFIK
+	- Istio
+
+	=> GCE and NGINX are currently being supported and maintained by the Kubernetes project
+
+
+- creating an ingress controller:
+	1. create a name space
+		kubectl create namespace ingress-space
+
+	2. create a config map:
+		kubectl create configmap nginx-configuration --namespace=ingress-spac
+
+		template:
+			kind: ConfigMap 
+			apiVersion: v1 
+			metadata:
+				name: nginx-configuration
+
+	3. create service account:
+		kubectl create serviceaccount ingress-serviceaccount --namespace=ingress-space
+
+	4. create Roles & RoleBindings:
+
+		verify:
+			kubectl get roles --namespace=ingress-space
+			kubectl describe role <ingress-role-name> --namespace=ingress-space
+
+			kubectl get rolebindings --namespace=ingress-space
+
+
+	5. create ingress controller:
+
+		apiVersion: app/v1
+		kind: Deployment
+		metadata:
+		  name: ingress-controller
+		  namespace: ingress-space
+		spec:  
+		  replicas: 1 
+		  selector:
+		    matchLabels:
+		      name: nginx-ingress
+		  template:
+		    metadata:
+		        labels:
+		        name: nginx-ingress 
+		    spec:
+		      containers:
+		        - name: nginx-ingress-controller
+		          image: quay.io/kubernetes-ingress- controller/nginx-ingress-controller:0.21.0
+		      args:
+		        - /nginx-ingress-controller        
+		        - --configmap=$(POD_NAMESPACE)/nginx-configuration
+
+		      env:
+		        - name: POD_NAME
+		          valueFrom:
+		            fieldRef:
+		              fieldPath: metadata.name 
+		        - name: POD_NAMESPACE
+		          valueFrom:
+		            fieldRef:
+		              fieldPath: metadata.namespace
+
+		      ports:
+		        - name: http
+		          containerPort: 80 
+		        - name: https
+		          containerPort: 443
+
+
+
+		verify:
+			kubectl get pods --namespace=ingress-space --watch
+			kubectl get deployment --namespace=ingress-space
+
+	
+
+	6. create NodePort service to make Ingress available to external users:
+		kubectl expose deploy ingress-controller --namespace=ingress-space --name ingress --port=80 --target-port=80 --type NodePort
+
+		template:
+
+			apiVersion: v1 
+			kind: Service 
+			metadata:
+			  name: nginx-ingress 
+			spec:
+			  type: NodePort 
+			  ports:
+			  - port: 80
+			    nodeport: 30080
+			    targetPort: 80 
+			    protocol: TCP 
+			    name: http
+			  - port: 443 
+			    nodeport: 30043
+			    targetPort: 443 
+			    protocol: TCP 
+			    name: https
+			  selector:
+			    name: nginx-ingress
+
+
+		verify:
+			kubectl get services --namespace=ingress-space
+
+
+
+
+ 
+- create an ingress resouce (set of load balance rules):
+	- An Ingress Resource is a set of rules and configurations applied on the ingress controller
+
+	1. create namespace for apps:
+		kubectl create namespace app-space
+	2. create app & service:
+
+	3. create ingress resource:
+		- you have rules at the top for each host or domain name. And within each rule you have different paths to route traffic based on the URL.
+
+		- For ex: with host name www.my-domain.com, we create a rule with 2 path that route to 2 services
+	
+			kubectl create ingress ingress-myapp --namespace=app-space --rule="/products=products-service:8080" --rule="/reviews=reviews-service:8080"
+
+			template:
+				
+				apiVersion: networking.k8s.io/v1
+				kind: Ingress 
+				metadata:
+				  name: ingress-myapp
+				  namespace: app-space
+				  annotations: 
+				    nginx.ingress.kubernetes.io/rewrite-target: /
+				    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+				spec:
+				  rules:
+				  - http: 
+				    paths:
+				    - path: /products
+				      pathType: Prefix
+				      backend:
+				        service:
+				          name: products-service
+				          port: 
+				            number: 8080
+
+				    - path: /reviews
+				      pathType: Prefix
+				      backend:
+				        service:
+				          name: reviews-service
+				          port: 
+				            number: 8080
+
+
+
+		- For ex: We have 2 hostname www.my-domain-1.com and www.my-domain-1.com 
+			host name www.my-domain-1.com, we create a rule with 2 path that route to 2 services
+			host name www.my-domain-2.com, we create a rule with 2 path that route to 2 services
+
+			template 1:
+
+				apiVersion: networking.k8s.io/v1
+				kind: Ingress 
+				metadata:
+				  name: ingress-myapp
+				  namespace: app-space
+				spec:
+				  rules:
+				  - host: www.my-domain-1.com
+				    http: 
+				      paths:
+				      - backend:
+				          service:
+				            name: service-1
+				            port: 
+				              number: 8080
+
+				  - host: www.my-domain-2.com
+				    http: 
+				      paths:
+				      - backend:
+				          service:
+				            name: service-2
+				            port: 
+				              number: 8080
+
+
+			=> All traffic from these domain names will be routed to the appropriate backend irrespective of the URL Path used. 
+				You can still have multiple path specifications in each of these to handle different URL paths.
+
+
+            template 2:
+
+                apiVersion: networking.k8s.io/v1
+				kind: Ingress
+				metadata:
+				    name: ingress-myapp
+				    namespace: app-space
+				spec:
+				    rules:
+				    - host: www.my-domain-1.com
+				      http:
+				        paths:
+				        - pathType: Prefix
+				          path: "/abc"
+				          backend:
+				            service:
+				                name: abc-service
+				                port:
+				                    number: 8080
+
+				    - host: www.my-domain-2.com
+				      http:
+				        paths:
+				        - pathType: Prefix
+				          path: "/xyz"
+				          backend:
+				            service:
+				                name: xyz-service
+				                port:
+				                    number: 8080
+                                    
+
+            =>  www.my-domain-1.com/abc will be routed to abc-service:8080
+                www.my-domain-2.com/xyz will be routed to xyz-service:8080
+
+
+
+
+		verify:
+			kubectl get ingress --namespace=app-space
+			kubectl describe ingress ingress-myapp --namespace=app-space
+
+
+
+
+
+
+
+
+- ingress resouce's annotations:
+	https://kubernetes.github.io/ingress-nginx/examples/rewrite/
+
+	1. rewrite-target:
+	   in example below:
+	   	-  we configure the "/pay" URL path on the ingress controller so we can forwarded client to the appropriate application in the backend
+	   		http://<ingress-service>:<ingress-port>/pay --> http://<pay-service>:<port>/pay
+	   	
+	   	- but the application itself doesnt expose "/pay" path => we must using rewrite-target:
+	   		=> nginx.ingress.kubernetes.io/rewrite-target: /
+
+
+		apiVersion: networking.k8s.io/v1
+		kind: Ingress
+		metadata:
+		  name: test-ingress
+		  namespace: critical-space
+		  annotations:
+		    nginx.ingress.kubernetes.io/rewrite-target: /
+		spec:
+		  rules:
+		  - http:
+		      paths:
+		      - path: /pay
+		        pathType: Prefix
+		        backend:
+		          service:
+		            name: pay-service
+		            port: 
+		              number: 8080
+
+
+	2. ssl-redirect:
+		- by default ingress-resource try to redirect http to https, to disable this:
+			nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+
+
+
+
+
+
+
+basic commands:
+
+
+	kubectl create ingress -h
+		=> get help for creating ingress
+	
+
+	kubectl create ingress <ingress-resource-name> --namespace=<namespace-name> --rule="<host/path>=<service-name1>:<service-port1>" --rule="<host/path>=<service-name2>:<service-port2>" ...
+		=> kubectl create ingress ingress-payment --namespace=payment-space --rule="/pay=payment-service:8080"
+
+
+	kubectl get ingress <ingress-resource-name>
+	kubectl get ingress -A
+	kubectl describe ingress <ingress-resource-name> --namespace=<namespace-name>
+
+
+
+	kubectl edit ingress <ingress-resource-name> --namespace=<namespace-name>
+		=> change & apply immediately
+
+
+	kubectl logs <ingress-controller-name> --namespace=<namespace-name>
+		=> view ingress-controller's log
+
+
+

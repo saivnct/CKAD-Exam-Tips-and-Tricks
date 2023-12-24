@@ -1,0 +1,108 @@
+
+Kubernetes API version:
+	major_version/minor_version/patch_version
+
+	ex: 1.22.2
+
+API Versions:
+	- GA (generally available) stable version
+		ex: /v1
+	- Beta
+		ex: /v1beta1, /v1beta2, /v1beta3
+	- Alphe
+		ex: /v1alpha1, /v1alpha2, /v1alpha3
+
+
+Preferred/Storage version: when we have multiple version enabled, which version is the command to query?
+	ex:
+
+		deployment-1.yaml:
+			apiVersion: apps/v1alpha1
+			kind: Deployment
+			metadata:
+			  name: my-deployment
+			spec:
+
+
+		deployment-2.yaml:
+			apiVersion: apps/v1beta1
+			kind: Deployment
+			metadata:
+			  name: my-deployment
+			spec:
+
+
+		deployment-3.yaml:
+			apiVersion: apps/v1
+			kind: Deployment
+			metadata:
+			  name: my-deployment
+			spec:
+
+
+	=> Preferred/Storage version will be used
+		- if any object is created with the API version diff with Preferred/Storage version  => object will be converted to storage version before storing them into the ETCD db
+
+
+
+- show the preferred/storage version of API
+	C1: 
+		kubectl explain <api-name>
+		=> show the preferred/storage version of API <api-name>
+
+			ex: 
+			kubectl explain deployment
+	C2:
+		1. run proxy to k8s API:
+			kubectl proxy 8001 &
+			=> running an proxy to k8s API on port 8001 (in background)
+
+		2. curl localhost:8001/apis/<api-group-name>
+
+
+- set preferred version to an API:
+	1. make an backup on kube API server manifest file -> so that we can bu in case failed
+
+		cp /etc/kubernetes/manifest/kube-apiserver.yaml /root/kube-apiserver.yaml.bu
+		
+
+
+	2. 
+		nano /etc/kubernetes/manifest/kube-apiserver.yaml
+
+
+		ex: 
+				--runtime-config=rbac.authorization.k8s.io/v1alpha1
+
+	3. wait a couples of mins for kube-apiserver to restart 
+
+		kubectl get pod -n kube-system
+
+	4. 
+
+		
+
+
+- kubectl convert:
+	- when k8s cluster is upgraded, we have new APIs being added and old ones being deprecated and removed
+	- when an API version is removed => you must to update your manifest file (.yaml file) to new version
+
+
+		kubectl convert -f <old-file> --output-version <new-api>
+
+		ex:
+			kubectl convert -f nginx-deployment.yaml --output-version apps/v1
+
+	- installing kubectl convert:
+		https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-convert-plugin
+
+
+
+
+
+
+
+
+
+
+
