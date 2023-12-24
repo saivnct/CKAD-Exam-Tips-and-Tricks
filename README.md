@@ -72,17 +72,6 @@ Certified Kubernetes Application Developer (CKAD) Curriculum [here](CKAD_Curricu
 - [helm](Exercise/8-helm.md)
 - [Custom Resource Definitions](Exercise/9-crd.md)
 
+## How to Contribute
+I welcome contributions from the community to make this resource even more valuable. If you have additional tips, new exercises, or corrections, feel free to submit a pull request. 
 
-
-**Configuration**
-* [ConfigMaps](Curriculum/Configuration/configmap.md)
-* [SecurityContexts](Curriculum/Configuration/securitycontext.md)
-* [Resources](Curriculum/Configuration/resources.md)
-* [Secrets](Curriculum/Configuration/secrets.md)
-* [ServiceAccounts](Curriculum/Configuration/serviceaccount.md)
-
-**Pod Design**
-
-* [Labels, Selectors, and Annotations](Curriculum/Pod%20Design/labelsSelectorsAnnotations.md)
-* [Deployment Rollouts and Rollbacks](Curriculum/Pod%20Design/deployRolloutsRollbacks.md)
-* [Jobs and CronJobs](Curriculum/Pod%20Design/jobsAndCronJobs.md)
